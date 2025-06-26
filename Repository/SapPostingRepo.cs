@@ -217,7 +217,7 @@ namespace SD_Core_Api.Repository
             }
         }
 
-        public SAPAcknowledgementDocTrans SAP_SD_AP_Data()
+        public SAPDocTransJson SAP_SD_AP_Data()
 
         {
 
@@ -299,68 +299,51 @@ namespace SD_Core_Api.Repository
                     }
                 }
             }
-
-            var client = new HttpClient();
-
-            var baseaddress = AP_Api_URL + AP_Api_EndPoint;
-
-            var content = new StringContent(object_to_Json(sAPDocTransJson), Encoding.UTF8, "application/json");
-
-            //var jsonstring = object_to_Json(sAPDocTransJson);
-
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-
-            var Response = client.PostAsync(baseaddress, content).Result;
-            SAPAcknowledgementDocTrans responseResult = new SAPAcknowledgementDocTrans();
-
-            if (Response.IsSuccessStatusCode)
-            {
-                var responseContent = Response.Content.ReadAsStringAsync().Result;
-                responseResult = JsonConvert.DeserializeObject<SAPAcknowledgementDocTrans>(responseContent);
-                List<ResponseData> list = responseResult.data.ToList();
-                if (conn.State == ConnectionState.Closed)
-                {
-                    conn.Open();
-                }
-                foreach (ResponseData data in list)
-                {
-                    if (data.DocTypeID == 1)
-                    {
-                        SqlCommand cmd = new SqlCommand("update OPCH set U_SyncStatus = 1 where docentry = '" + data.DocEntry + "'", conn);
-                        cmd.ExecuteNonQuery();
-                    }
-                    else if (data.DocTypeID == 9)
-                    {
-                        SqlCommand cmd = new SqlCommand("update ORPC set U_SyncStatus = 1 where docentry = '" + data.DocEntry + "'", conn);
-                        cmd.ExecuteNonQuery();
-                    }
-                    else if (data.DocTypeID == 11)
-                    {
-                        SqlCommand cmd = new SqlCommand("update ORIN set U_SyncStatus = 1 where docentry = '" + data.DocEntry + "'", conn);
-                        cmd.ExecuteNonQuery();
-
-                    }
-
-
-                }
-                return responseResult;
-
-            }
-            else
-            {
-                string Result = Response.Content.ReadAsStringAsync().Result.ToString();
-                responseResult.status = "Failed";
-                responseResult.message = Result;
-                return responseResult;
-            }
-
+            return sAPDocTransJson;
 
 
             //}
 
 
         }
+
+        public void UpdateDoctransResponse(SAPAcknowledgementDocTrans responseResult)
+        {
+            Connectivity con = new Connectivity();
+            //    //SqlDataAdapter adpt;
+            SqlConnection conn = new SqlConnection(con.Connection_string());
+            if (conn.State == ConnectionState.Closed) conn.Open();
+
+            List<ResponseData> list = responseResult.data.ToList();
+
+            foreach (ResponseData data in list)
+            {
+                if (data.DocTypeID == 1)
+                {
+                    SqlCommand cmd = new SqlCommand("update OPCH set U_SyncStatus = 1 where docentry = '" + data.DocEntry + "'", conn);
+                    cmd.ExecuteNonQuery();
+                }
+                else if (data.DocTypeID == 9)
+                {
+                    SqlCommand cmd = new SqlCommand("update ORPC set U_SyncStatus = 1 where docentry = '" + data.DocEntry + "'", conn);
+                    cmd.ExecuteNonQuery();
+                }
+                else if (data.DocTypeID == 11)
+                {
+                    SqlCommand cmd = new SqlCommand("update ORIN set U_SyncStatus = 1 where docentry = '" + data.DocEntry + "'", conn);
+                    cmd.ExecuteNonQuery();
+
+                }
+            }
+            if (conn.State == ConnectionState.Open)
+            {
+                conn.Close();
+            }
+        }
+
+
+
+
 
     }
 

@@ -35,13 +35,27 @@ namespace SD_Core_Api.Controllers
         [AllowAnonymous]
         [HttpPost]
         [Route("SD_SAP_Data_Sync")]
-        public ActionResult SD_SAP_Data_Sync()
+        public SAPDocTransJson SD_SAP_Data_Sync()
         {
 
-            var result = _sapPosting.SAP_SD_AP_Data();
+            SAPDocTransJson result = _sapPosting.SAP_SD_AP_Data();
 
-            return Ok(result);
+            return  result;
 
+
+
+        }
+        [AllowAnonymous]
+        [HttpPost]
+        [Route("SAP_Sync_Update_Response")]
+        public void SAP_Sync_Update_Response(SAPAcknowledgementDocTrans data)
+        {
+            try
+            {
+                _sapPosting.UpdateDoctransResponse(data);
+
+            }
+            catch (Exception e) { throw e; }
 
 
         }
